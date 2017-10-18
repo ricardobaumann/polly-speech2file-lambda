@@ -1,0 +1,26 @@
+service: polly
+
+provider:
+  name: aws
+  runtime: java8
+  memorySize: 1536
+  timeout: 300
+  region: eu-west-1
+  iamRoleStatements:
+   - Effect: Allow
+     Action:
+     - polly:SynthesizeSpeech
+     - polly:DescribeVoices
+     Resource: "*"
+   - Effect: Allow
+     Action:
+     - s3:PutObject
+     Resource:
+       - "*"
+
+package:
+  artifact: build/distributions/polly-speech2file-lambda-1.0.zip
+
+functions:
+  text2speech:
+    handler: speech2file.LambdaRequestHandler
