@@ -17,8 +17,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import java.io.InputStream
 import java.io.OutputStream
 
-data class HandlerInput(val ssml: String)
-data class HandlerOutput(val message: String)
+data class HandlerInput(val ssml: String, val bucketName: String, val fileName: String)
+data class HandlerOutput(val status: String)
 
 class LambdaRequestHandler : RequestStreamHandler {
     private val mapper = jacksonObjectMapper()
@@ -51,32 +51,10 @@ class LambdaRequestHandler : RequestStreamHandler {
 
         val objectMetadata = ObjectMetadata()
         //objectMetadata.contentLength = pollyResult.
-        val upload = transferManager.upload(PutObjectRequest("polly-test2", "polly.mp3", pollyResult, objectMetadata))
+        val upload = transferManager.upload(PutObjectRequest(inputObj.bucketName, inputObj.fileName, pollyResult, objectMetadata))
         upload.waitForUploadResult()
 
         mapper.writeValue(output, HandlerOutput(upload.state.toString()))
     }
-
-    val s = "<speak xmlns=\"http://www.w3.org/2001/10/synthesis\"\n" +
-            "       xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n" +
-            "       version=\"1.0\">\n" +
-            "  <metadata>\n" +
-            "    <dc:title xml:lang=\"en\">Telephone Menu: Level 1</dc:title>\n" +
-            "  </metadata>\n" +
-            "\n" +
-            "  <p>\n" +
-            "    <s xml:lang=\"en-US\">\n" +
-            "      <voice name=\"David\" gender=\"male\" age=\"25\">\n" +
-            "        For English, press <emphasis>one</emphasis>.\n" +
-            "      </voice>\n" +
-            "    </s>\n" +
-            "    <s xml:lang=\"es-MX\">\n" +
-            "      <voice name=\"Miguel\" gender=\"male\" age=\"25\">\n" +
-            "        Para español, oprima el <emphasis>dos</emphasis>.\n" +
-            "      </voice>\n" +
-            "    </s>\n" +
-            "  </p>\n" +
-            "\n" +
-            "</speak>"
 
 }
