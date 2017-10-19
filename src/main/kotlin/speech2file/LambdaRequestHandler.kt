@@ -12,16 +12,17 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.io.InputStream
 import java.io.OutputStream
 
-data class HandlerInput(val ssml: String, val bucketName: String, val fileName: String)
+data class HandlerInput(val ssml: String, val bucketName: String = "bucket", val fileName: String = "file", val region: String = "eu-west-1")
 data class HandlerOutput(val status: String)
 
 class LambdaRequestHandler : RequestStreamHandler {
-    private val mapper = jacksonObjectMapper()
+    private val mapper = jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 
     private val polly by lazy {
         AmazonPollyClientBuilder.defaultClient()
@@ -31,16 +32,13 @@ class LambdaRequestHandler : RequestStreamHandler {
         polly.describeVoices(DescribeVoicesRequest()).voices[0]
     }
 
-    private val amazons3 by lazy {
-        AmazonS3ClientBuilder.defaultClient()
-    }
-
-    private val transferManager by lazy {
-        TransferManagerBuilder.standard().withS3Client(amazons3).build()
-    }
-
     override fun handleRequest(input: InputStream?, output: OutputStream?, context: Context?) {
+
         val inputObj = mapper.readValue<HandlerInput>(input!!)
+
+        val amazons3 = AmazonS3ClientBuilder.standard().withRegion(inputObj.region).build()
+        val transferManager = TransferManagerBuilder.standard().withS3Client(amazons3).build()
+
         val synthRequest = SynthesizeSpeechRequest()
                 .withText(inputObj.ssml)
                 .withTextType(TextType.Ssml)
