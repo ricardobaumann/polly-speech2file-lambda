@@ -9,6 +9,7 @@ import com.amazonaws.services.polly.model.OutputFormat
 import com.amazonaws.services.polly.model.SynthesizeSpeechRequest
 import com.amazonaws.services.polly.model.TextType
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.s3.model.CannedAccessControlList
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import java.io.InputStream
 import java.io.OutputStream
 
-data class HandlerInput(val ssml: String, val bucketName: String = "bucket", val fileName: String = "file", val region: String = "eu-west-1")
+data class HandlerInput(val ssml: String, val bucketName: String = "bucket", val fileName: String = "file", val region: String = "eu-west-1", val publicFile: Boolean = true)
 data class HandlerOutput(val status: String)
 
 class LambdaRequestHandler : RequestStreamHandler {
@@ -48,7 +49,11 @@ class LambdaRequestHandler : RequestStreamHandler {
         val pollyResult = polly.synthesizeSpeech(synthRequest).audioStream
 
         val objectMetadata = ObjectMetadata()
-        val upload = transferManager.upload(PutObjectRequest(inputObj.bucketName, inputObj.fileName, pollyResult, objectMetadata))
+        val putObjectRequest = PutObjectRequest(inputObj.bucketName, inputObj.fileName, pollyResult, objectMetadata)
+        if (inputObj.publicFile) {
+            putObjectRequest.withCannedAcl(CannedAccessControlList.PublicRead)
+        }
+        val upload = transferManager.upload(putObjectRequest)
         upload.waitForUploadResult()
 
         mapper.writeValue(output, HandlerOutput(upload.state.toString()))
