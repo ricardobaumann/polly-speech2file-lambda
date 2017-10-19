@@ -50,7 +50,6 @@ class LambdaRequestHandler : RequestStreamHandler {
         val pollyResult = polly.synthesizeSpeech(synthRequest).audioStream
 
         val objectMetadata = ObjectMetadata()
-        //objectMetadata.contentLength = pollyResult.
         val upload = transferManager.upload(PutObjectRequest(inputObj.bucketName, inputObj.fileName, pollyResult, objectMetadata))
         upload.waitForUploadResult()
 
