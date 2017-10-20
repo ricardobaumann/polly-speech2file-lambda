@@ -4,10 +4,7 @@ package speech2file
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 import com.amazonaws.services.polly.AmazonPollyClientBuilder
-import com.amazonaws.services.polly.model.DescribeVoicesRequest
-import com.amazonaws.services.polly.model.OutputFormat
-import com.amazonaws.services.polly.model.SynthesizeSpeechRequest
-import com.amazonaws.services.polly.model.TextType
+import com.amazonaws.services.polly.model.*
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.CannedAccessControlList
 import com.amazonaws.services.s3.model.ObjectMetadata
@@ -30,7 +27,7 @@ class LambdaRequestHandler : RequestStreamHandler {
     }
 
     private val voice by lazy {
-        polly.describeVoices(DescribeVoicesRequest()).voices[0]
+        polly.describeVoices(DescribeVoicesRequest().withLanguageCode(LanguageCode.DeDE)).voices[0]
     }
 
     override fun handleRequest(input: InputStream?, output: OutputStream?, context: Context?) {
